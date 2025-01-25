@@ -1,20 +1,20 @@
-const americanOnly = require('./american-only.js');
-const americanToBritishSpelling = require('./american-to-british-spelling.js');
+const americanOnly = require("./american-only.js");
+const americanToBritishSpelling = require("./american-to-british-spelling.js");
 const americanToBritishTitles = require("./american-to-british-titles.js");
-const britishOnly = require('./british-only.js');
+const britishOnly = require("./british-only.js");
 
 const reverseDict = (obj) => {
   return Object.assign(
     {},
     ...Object.entries(obj).map(([k, v]) => ({ [v]: k }))
   );
-}
+};
 
 class Translator {
   toBritishEnglish(text) {
     const dict = { ...americanOnly, ...americanToBritishSpelling };
     const titles = americanToBritishTitles;
-    const timeRegex = /([1-9]|1[012]):[0-5][1-9]/g;
+    const timeRegex = /([1-9]|1[012]):[0-5][0-9]/g;
     const translated = this.translate(
       text,
       dict,
@@ -28,7 +28,6 @@ class Translator {
 
     return translated;
   }
-
   toAmericanEnglish(text) {
     const dict = { ...britishOnly, ...reverseDict(americanToBritishSpelling) };
     const titles = reverseDict(americanToBritishTitles);
@@ -40,14 +39,11 @@ class Translator {
       timeRegex,
       "toAmerican"
     );
-
     if (!translated) {
       return text;
     }
-
     return translated;
   }
-
   translate(text, dict, titles, timeRegex, locale) {
     const lowerText = text.toLowerCase();
     const matchesMap = {};
@@ -59,12 +55,12 @@ class Translator {
       }
     });
 
-    // Filter words with spaces from the current dictionary
+    // Filter words with spaces from current dictionary
     const wordsWithSpace = Object.fromEntries(
       Object.entries(dict).filter(([k, v]) => k.includes(" "))
     );
 
-    // Search for spaced words matches and add them to the matchesMap object
+    // Search for spaced word matches and add them to the matchesMap object
     Object.entries(wordsWithSpace).map(([k, v]) => {
       if (lowerText.includes(k)) {
         matchesMap[k] = v;
@@ -76,12 +72,13 @@ class Translator {
       if (dict[word]) matchesMap[word] = dict[word];
     });
 
-    // Search for time matches and add them to the matchsMap object
+    // Search for time matches and add them to the matchesMap object
     const matchedTimes = lowerText.match(timeRegex);
+
     if (matchedTimes) {
       matchedTimes.map((e) => {
         if (locale === "toBritish") {
-          return matchesMap[e] = e.replace(":", ".");
+          return (matchesMap[e] = e.replace(":", "."));
         }
         return (matchesMap[e] = e.replace(".", ":"));
       });
@@ -89,9 +86,10 @@ class Translator {
 
     // No matches
     if (Object.keys(matchesMap).length === 0) return null;
-
     // Return logic
+    console.log("matchesMap :>> ", matchesMap);
     const translation = this.replaceAll(text, matchesMap);
+
     const translationWithHighlight = this.replaceAllWithHighlight(
       text,
       matchesMap
@@ -104,13 +102,12 @@ class Translator {
     const re = new RegExp(Object.keys(matchesMap).join("|"), "gi");
     return text.replace(re, (matched) => matchesMap[matched.toLowerCase()]);
   }
-
   replaceAllWithHighlight(text, matchesMap) {
     const re = new RegExp(Object.keys(matchesMap).join("|"), "gi");
     return text.replace(re, (matched) => {
-      return `<span class="highlight">
-        ${matchesMap[matched.toLowerCase()]}
-      </span>`;
+      return `<span class="highlight">${
+        matchesMap[matched.toLowerCase()]
+      }</span>`;
     });
   }
 }
